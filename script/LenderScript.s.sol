@@ -6,7 +6,7 @@ import "../src/Lender.sol";
 import "../src/Staking.sol";
 import "../src/Beedle.sol";
 
-import {WETH} from "solady/src/tokens/WETH.sol";
+import {WETH} from "../lib/solady/src/tokens/WETH.sol";
 import {VestingWallet} from "openzeppelin-contracts/contracts/finance/VestingWallet.sol";
 
 contract LenderScript is Script {

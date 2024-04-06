@@ -5,14 +5,12 @@ import "./utils/Errors.sol";
 import "./utils/Structs.sol";
 
 import {IERC20} from "./interfaces/IERC20.sol";
-
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 
 contract Fees {
     address public immutable WETH;
     address public immutable staking;
 
-    /// uniswap v3 router
     ISwapRouter public constant swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
@@ -21,12 +19,9 @@ contract Fees {
         staking = _staking;
     }
 
-    /// @notice swap loan tokens for collateral tokens from liquidations
-    /// @param _profits the token to swap for WETH
-    //q why should anyone call this function.
     function sellProfits(address _profits) public {
         require(_profits != WETH, "not allowed");
-        //q this takes total amount of _profits in this contract initially it should be zero.
+
         uint256 amount = IERC20(_profits).balanceOf(address(this));
 
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
@@ -36,7 +31,6 @@ contract Fees {
                 fee: 3000,
                 recipient: address(this),
                 deadline: block.timestamp,
-                //q did we send the amo
                 amountIn: amount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0

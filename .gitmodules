@@ -1,9 +1,18 @@
-[submodule "lib/openzeppelin-contracts"]
-	path = lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/solady"]
 	path = lib/solady
+	url = https://github.com/vectorized/solady
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "beedle_shoes/lib/forge-std"]
+	path = beedle_shoes/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "beedle_shoes/lib/openzeppelin-contracts"]
+	path = beedle_shoes/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "beedle_shoes/lib/solady"]
+	path = beedle_shoes/lib/solady
 	url = https://github.com/vectorized/solady

@@ -4,10 +4,9 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "../src/Lender.sol";
 
-import {ERC20} from "solady/src/tokens/ERC20.sol";
+import {ERC20} from "../lib/solady/src/tokens/ERC20.sol";
 
 contract TERC20 is ERC20 {
-
     function name() public pure override returns (string memory) {
         return "Test ERC20";
     }
@@ -36,19 +35,19 @@ contract LenderTest is Test {
         lender = new Lender();
         loanToken = new TERC20();
         collateralToken = new TERC20();
-        loanToken.mint(address(lender1), 100000*10**18);
-        loanToken.mint(address(lender2), 100000*10**18);
-        loanToken.mint(address(borrower), 100000*10**18);
-        collateralToken.mint(address(borrower), 100000*10**18);
+        loanToken.mint(address(lender1), 100000 * 10 ** 18);
+        loanToken.mint(address(lender2), 100000 * 10 ** 18);
+        loanToken.mint(address(borrower), 100000 * 10 ** 18);
+        collateralToken.mint(address(borrower), 100000 * 10 ** 18);
         vm.startPrank(lender1);
-        loanToken.approve(address(lender), 1000000*10**18);
-        collateralToken.approve(address(lender), 1000000*10**18);
+        loanToken.approve(address(lender), 1000000 * 10 ** 18);
+        collateralToken.approve(address(lender), 1000000 * 10 ** 18);
         vm.startPrank(lender2);
-        loanToken.approve(address(lender), 1000000*10**18);
-        collateralToken.approve(address(lender), 1000000*10**18);
+        loanToken.approve(address(lender), 1000000 * 10 ** 18);
+        collateralToken.approve(address(lender), 1000000 * 10 ** 18);
         vm.startPrank(borrower);
-        loanToken.approve(address(lender), 1000000*10**18);
-        collateralToken.approve(address(lender), 1000000*10**18);
+        loanToken.approve(address(lender), 1000000 * 10 ** 18);
+        collateralToken.approve(address(lender), 1000000 * 10 ** 18);
     }
 
     function testFuzz_createPool(uint256 amount, uint256 auctionLength) public {
@@ -57,9 +56,9 @@ contract LenderTest is Test {
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
+            minLoanSize: 100 * 10 ** 18,
             poolBalance: amount,
-            maxLoanRatio: 2*10**18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: auctionLength,
             interestRate: 1000,
             outstandingLoans: 0
@@ -84,22 +83,25 @@ contract LenderTest is Test {
                 )
             );
 
-            (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
+            (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
             assertEq(poolBalance, amount);
         }
     }
 
-    function testFuzz_borrow(uint256 debtAmount, uint256 collateralAmount) public {
-        vm.assume(collateralAmount < 100000*10**18);
+    function testFuzz_borrow(
+        uint256 debtAmount,
+        uint256 collateralAmount
+    ) public {
+        vm.assume(collateralAmount < 100000 * 10 ** 18);
         vm.assume(collateralAmount > 0);
         vm.startPrank(lender1);
         Pool memory p = Pool({
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
@@ -115,21 +117,24 @@ contract LenderTest is Test {
         Borrow[] memory borrows = new Borrow[](1);
         borrows[0] = b;
 
-        if (debtAmount > 1000*10**18) {
+        if (debtAmount > 1000 * 10 ** 18) {
             vm.expectRevert(LoanTooLarge.selector);
             lender.borrow(borrows);
-        } else if (debtAmount < 100*10**18) {
+        } else if (debtAmount < 100 * 10 ** 18) {
             vm.expectRevert(LoanTooSmall.selector);
             lender.borrow(borrows);
-        } else if (debtAmount > collateralAmount*2) {
+        } else if (debtAmount > collateralAmount * 2) {
             vm.expectRevert(RatioTooHigh.selector);
             lender.borrow(borrows);
         } else {
             lender.borrow(borrows);
             assertEq(loanToken.balanceOf(address(borrower)), debtAmount);
-            assertEq(collateralToken.balanceOf(address(lender)), collateralAmount);
-            (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
-            assertEq(poolBalance, 1000*10**18 - debtAmount);
+            assertEq(
+                collateralToken.balanceOf(address(lender)),
+                collateralAmount
+            );
+            (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
+            assertEq(poolBalance, 1000 * 10 ** 18 - debtAmount);
         }
     }
 
@@ -140,23 +145,23 @@ contract LenderTest is Test {
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
         });
         bytes32 poolId = lender.setPool(p);
 
-        (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
-        assertEq(poolBalance, 1000*10**18);
+        (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
+        assertEq(poolBalance, 1000 * 10 ** 18);
 
         vm.startPrank(borrower);
         Borrow memory b = Borrow({
             poolId: poolId,
-            debt: 100*10**18,
-            collateral: 100*10**18
+            debt: 100 * 10 ** 18,
+            collateral: 100 * 10 ** 18
         });
         Borrow[] memory borrows = new Borrow[](1);
         borrows[0] = b;
@@ -165,19 +170,24 @@ contract LenderTest is Test {
         vm.warp(block.timestamp + loanLength);
 
         uint256 debt = lender.getLoanDebt(0);
-        uint256 interest = ((p.interestRate * b.debt * loanLength) / 10000 / 365 days);
+        uint256 interest = ((p.interestRate * b.debt * loanLength) /
+            10000 /
+            365 days);
         uint256 f = (lender.lenderFee() * interest) / 10000;
         interest -= f;
 
-        loanToken.mint(address(borrower), 5*10**17);
+        loanToken.mint(address(borrower), 5 * 10 ** 17);
         uint256[] memory loanIds = new uint256[](1);
         loanIds[0] = 0;
         lender.repay(loanIds);
 
-        assertEq(loanToken.balanceOf(address(borrower)), 100000*10**18 - interest - f);
+        assertEq(
+            loanToken.balanceOf(address(borrower)),
+            100000 * 10 ** 18 - interest - f
+        );
         assertEq(collateralToken.balanceOf(address(lender)), 0);
-        (,,,,poolBalance,,,,) = lender.pools(poolId);
-        assertEq(poolBalance, 1000*10**18 + interest);
+        (, , , , poolBalance, , , , ) = lender.pools(poolId);
+        assertEq(poolBalance, 1000 * 10 ** 18 + interest);
     }
 
     // /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -191,23 +201,23 @@ contract LenderTest is Test {
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
         });
         bytes32 poolId = lender.setPool(p);
 
-        (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
-        assertEq(poolBalance, 1000*10**18);
+        (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
+        assertEq(poolBalance, 1000 * 10 ** 18);
 
         vm.startPrank(borrower);
         Borrow memory b = Borrow({
             poolId: poolId,
-            debt: 100*10**18,
-            collateral: 100*10**18
+            debt: 100 * 10 ** 18,
+            collateral: 100 * 10 ** 18
         });
         Borrow[] memory borrows = new Borrow[](1);
         borrows[0] = b;
@@ -226,9 +236,9 @@ contract LenderTest is Test {
             lender: lender2,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
@@ -237,7 +247,8 @@ contract LenderTest is Test {
 
         vm.warp(block.timestamp + timeToBuy);
 
-        uint256 maxInterest = (lender.MAX_INTEREST_RATE() * timeToBuy) / p.auctionLength;
+        uint256 maxInterest = (lender.MAX_INTEREST_RATE() * timeToBuy) /
+            p.auctionLength;
 
         if (timeToBuy > 1 days) {
             vm.expectRevert(AuctionEnded.selector);
@@ -257,23 +268,23 @@ contract LenderTest is Test {
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
         });
         bytes32 poolId = lender.setPool(p);
 
-        (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
-        assertEq(poolBalance, 1000*10**18);
+        (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
+        assertEq(poolBalance, 1000 * 10 ** 18);
 
         vm.startPrank(borrower);
         Borrow memory b = Borrow({
             poolId: poolId,
-            debt: 100*10**18,
-            collateral: 100*10**18
+            debt: 100 * 10 ** 18,
+            collateral: 100 * 10 ** 18
         });
         Borrow[] memory borrows = new Borrow[](1);
         borrows[0] = b;
@@ -302,32 +313,32 @@ contract LenderTest is Test {
     // /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function testFuzz_refinance(uint256 debt, uint256 collateral) public {
-        vm.assume(debt < 100000*10**18);
+        vm.assume(debt < 100000 * 10 ** 18);
         vm.assume(debt > 0);
-        vm.assume(collateral < 100000*10**18);
+        vm.assume(collateral < 100000 * 10 ** 18);
         vm.assume(collateral > 0);
         vm.startPrank(lender1);
         Pool memory p = Pool({
             lender: lender1,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
         });
         bytes32 poolId = lender.setPool(p);
 
-        (,,,,uint256 poolBalance,,,,) = lender.pools(poolId);
-        assertEq(poolBalance, 1000*10**18);
+        (, , , , uint256 poolBalance, , , , ) = lender.pools(poolId);
+        assertEq(poolBalance, 1000 * 10 ** 18);
 
         vm.startPrank(borrower);
         Borrow memory b = Borrow({
             poolId: poolId,
-            debt: 100*10**18,
-            collateral: 100*10**18
+            debt: 100 * 10 ** 18,
+            collateral: 100 * 10 ** 18
         });
         Borrow[] memory borrows = new Borrow[](1);
         borrows[0] = b;
@@ -338,9 +349,9 @@ contract LenderTest is Test {
             lender: lender2,
             loanToken: address(loanToken),
             collateralToken: address(collateralToken),
-            minLoanSize: 100*10**18,
-            poolBalance: 1000*10**18,
-            maxLoanRatio: 2*10**18,
+            minLoanSize: 100 * 10 ** 18,
+            poolBalance: 1000 * 10 ** 18,
+            maxLoanRatio: 2 * 10 ** 18,
             auctionLength: 1 days,
             interestRate: 1000,
             outstandingLoans: 0
@@ -363,19 +374,17 @@ contract LenderTest is Test {
         Refinance[] memory rs = new Refinance[](1);
         rs[0] = r;
 
-        if (debt > 1000*10**18) {
+        if (debt > 1000 * 10 ** 18) {
             vm.expectRevert(LoanTooLarge.selector);
             lender.refinance(rs);
-        } else if (debt < 100*10**18) {
+        } else if (debt < 100 * 10 ** 18) {
             vm.expectRevert(LoanTooSmall.selector);
             lender.refinance(rs);
-        } else if (debt > collateral*2) {
+        } else if (debt > collateral * 2) {
             vm.expectRevert(RatioTooHigh.selector);
             lender.refinance(rs);
         } else {
             lender.refinance(rs);
         }
-
     }
-
 }

@@ -5,8 +5,6 @@ src = "src"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
-remappings = []
-
 [rpc_endpoints]
 goerli = "${GOERLI_RPC_URL}"
 
